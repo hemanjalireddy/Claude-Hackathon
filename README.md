@@ -92,14 +92,6 @@ SHARK BAIT democratizes access to expert-level feedback and market intelligence,
 - **Interactive Visualizations**: Pie charts for segment distribution using Recharts library
 - **Web Search Integration**: Real-time competitor discovery using DuckDuckGo (maximum 3 searches per analysis)
 
-### User Interface
-
-- **Professional Dark Theme**: Glassmorphism design with backdrop blur effects
-- **Sophisticated Typography**: Space Grotesk for headings, Outfit for body text
-- **Responsive Design**: Optimized for desktop, tablet, and mobile devices
-- **Gradient Accents**: Color-coded features (Indigo/Purple for Pitch, Purple/Pink for Idea, Cyan/Teal for Market)
-- **Interactive Charts**: Data visualization using Recharts for customer segments and market data
-
 ---
 
 ## Tech Stack
