@@ -11,6 +11,7 @@ import shutil
 from services.video_processor import VideoProcessor
 from services.claude_analyzer import ClaudeAnalyzer
 from services.idea_analyzer import IdeaAnalyzer
+from services.market_insights_analyzer import MarketInsightsAnalyzer
 
 load_dotenv()
 
@@ -33,6 +34,7 @@ UPLOAD_DIR.mkdir(exist_ok=True)
 video_processor = VideoProcessor()
 claude_analyzer = ClaudeAnalyzer(api_key=os.getenv("ANTHROPIC_API_KEY"))
 idea_analyzer = IdeaAnalyzer(anthropic_api_key=os.getenv("ANTHROPIC_API_KEY"))
+market_insights_analyzer = MarketInsightsAnalyzer(anthropic_api_key=os.getenv("ANTHROPIC_API_KEY"))
 
 
 # Pydantic models for request validation
@@ -40,6 +42,17 @@ class IdeaAnalysisRequest(BaseModel):
     idea_description: str
     keywords: Optional[List[str]] = None
     industry: Optional[str] = None
+
+
+class MarketInsightsRequest(BaseModel):
+    startup_idea: str
+    ideal_customer: str
+    problem_solving: str
+    industry: str
+    known_competitors: Optional[str] = None
+    unique_value: Optional[str] = None
+    business_model: Optional[str] = None
+    geographic_regions: Optional[str] = None
 
 
 @app.get("/")
@@ -127,6 +140,40 @@ async def analyze_idea(request: IdeaAnalysisRequest):
     except Exception as e:
         print(f"Error analyzing idea: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error analyzing idea: {str(e)}")
+
+
+@app.post("/api/analyze-market")
+async def analyze_market(request: MarketInsightsRequest):
+    """
+    Analyze market landscape for a startup idea.
+
+    Returns:
+        - Customer segments and personas
+        - Competitive landscape (direct, adjacent, indirect competitors)
+        - Market gaps and opportunities
+        - Strategic positioning insights
+        - ASCII visualizations
+    """
+    try:
+        print(f"Analyzing market for: {request.startup_idea[:100]}...")
+
+        # Perform comprehensive market analysis
+        result = await market_insights_analyzer.analyze_market(
+            startup_idea=request.startup_idea,
+            ideal_customer=request.ideal_customer,
+            problem_solving=request.problem_solving,
+            industry=request.industry,
+            known_competitors=request.known_competitors,
+            unique_value=request.unique_value,
+            business_model=request.business_model,
+            geographic_regions=request.geographic_regions
+        )
+
+        return JSONResponse(content=result)
+
+    except Exception as e:
+        print(f"Error analyzing market: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error analyzing market: {str(e)}")
 
 
 if __name__ == "__main__":

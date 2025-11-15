@@ -1,4 +1,4 @@
-import { CheckCircle, XCircle, TrendingUp, Award, RotateCcw, FileText } from 'lucide-react'
+import { TrendingUp, Award, RotateCcw, FileText } from 'lucide-react'
 import { useState } from 'react'
 
 type PersonaType = 'investor' | 'advisor' | 'healthcare' | 'edtech' | 'tech'
@@ -122,18 +122,10 @@ export default function FeedbackDisplay({
               // Check if line is a bullet point
               if (line.trim().startsWith('-') || line.trim().startsWith('•') || line.trim().match(/^\d+\./)) {
                 const content = cleanMarkdown(line.replace(/^[-•]\s*/, '').replace(/^\d+\.\s*/, ''))
-                const isPositive = content.toLowerCase().includes('good') ||
-                                   content.toLowerCase().includes('strong') ||
-                                   content.toLowerCase().includes('excellent') ||
-                                   content.toLowerCase().includes('effective')
 
                 return (
-                  <div key={index} className="flex items-start space-x-3 py-3 px-4 rounded-lg bg-slate-900/30 border border-slate-700/30">
-                    {isPositive ? (
-                      <CheckCircle className="w-5 h-5 text-emerald-400 mt-1 flex-shrink-0" />
-                    ) : (
-                      <XCircle className="w-5 h-5 text-amber-400 mt-1 flex-shrink-0" />
-                    )}
+                  <div key={index} className="flex items-start space-x-4 py-2 pl-6">
+                    <span className="text-indigo-400 font-bold mt-1 flex-shrink-0">•</span>
                     <p className="text-slate-300 flex-1 leading-relaxed">{content}</p>
                   </div>
                 )
