@@ -924,211 +924,25 @@ if not shutil.which("ffmpeg"):
 
 **Outcome**: Users receive clear error messages with installation guidance before attempting video processing.
 
-### Challenge 3: Git Push Blocked by Secret Scanning
-
-**Problem**: GitHub push rejected with "push declined due to repository rule violations" due to exposed Anthropic API key in `.env.example`.
-
-**Root Cause**: A real API key was accidentally committed in the example environment file during initial setup.
-
-**Solution**:
-1. Changed `.env.example` to use placeholder: `ANTHROPIC_API_KEY=your_anthropic_api_key_here`
-2. Amended commits to remove exposed secret:
-```bash
-git commit --amend
-git push --force-with-lease
-```
-3. Rotated the exposed API key at console.anthropic.com
-4. Added `.env` to `.gitignore` with prominent warning comment
-
-**Outcome**: Repository complies with GitHub secret scanning policies. No real credentials in version control.
-
-### Challenge 4: Markdown Formatting in AI Feedback
-
-**Problem**: Claude responses included markdown formatting (***text***, **text**, etc.) which rendered as asterisks in the UI, reducing readability.
-
-**Root Cause**: Direct display of raw Claude API responses without processing markdown syntax.
-
-**Solution**: Implemented comprehensive markdown stripping function:
-```typescript
-const cleanMarkdown = (text: string): string => {
-  return text
-    .replace(/\*\*\*/g, '')      // Remove bold+italic
-    .replace(/\*\*/g, '')        // Remove bold
-    .replace(/\*/g, '')          // Remove italic
-    .replace(/_{2,}/g, '')       // Remove underline
-    .replace(/_/g, '')           // Remove single underscore
-    .replace(/~~(.+?)~~/g, '$1') // Remove strikethrough
-    .trim()
-}
-```
-
-**Outcome**: Clean, professional text display without distracting formatting artifacts.
-
-### Challenge 5: Verbose Market Analysis Output
-
-**Problem**: Initial Market Insights feature generated extremely long responses (3000+ tokens), causing slow processing times (90+ seconds) and overwhelming users with information.
-
-**Root Cause**: Prompts requested detailed, comprehensive analysis without length constraints. Claude provided thorough but verbose responses.
-
-**Solution**:
-1. Reduced max_tokens across all analysis functions (50% reduction on average)
-2. Rewrote prompts with explicit brevity constraints:
-```python
-"Be concise. Max 150 words. Use 1 sentence per point."
-```
-3. Removed ASCII visualizations and competitor matrices
-4. Limited results to top 2-3 items per category
-
-**Outcome**: Analysis time reduced to 40-60 seconds. More scannable, actionable insights.
-
-### Challenge 6: Inconsistent JSON Parsing from Claude
-
-**Problem**: Claude sometimes wrapped JSON responses in markdown code blocks (```json ... ```), causing JSON parsing failures.
-
-**Root Cause**: Claude's training includes markdown formatting for readability, even when instructed to return "only JSON."
-
-**Solution**: Implemented regex-based JSON extraction:
-```python
-content = response.content[0].text
-json_match = re.search(r'```(?:json)?\s*(\[.*?\]|\{.*?\})\s*```', content, re.DOTALL)
-if json_match:
-    content = json_match.group(1)
-return json.loads(content)
-```
-
-**Outcome**: 99%+ parsing success rate. Graceful fallback to direct parsing if no code block detected.
-
-### Challenge 7: Web Search Without API Keys
-
-**Problem**: Needed real-time competitor discovery but didn't want to require users to obtain additional API keys (Google Custom Search, Bing, etc.).
-
-**Root Cause**: Most search APIs require registration and impose query limits.
-
-**Solution**: Implemented DuckDuckGo HTML scraping:
-```python
-def perform_web_search(self, query: str, num_results: int = 5):
-    search_url = f"https://html.duckduckgo.com/html/?q={requests.utils.quote(query)}"
-    response = requests.get(search_url, headers={'User-Agent': '...'})
-    soup = BeautifulSoup(response.text, 'html.parser')
-
-    results = []
-    for div in soup.find_all('div', class_='result')[:num_results]:
-        title = div.find('a', class_='result__a').get_text(strip=True)
-        snippet = div.find('a', class_='result__snippet').get_text(strip=True)
-        url = div.find('a', class_='result__a').get('href')
-        results.append({'title': title, 'snippet': snippet, 'url': url})
-
-    return results
-```
-
-**Outcome**: Free, API-key-less competitor discovery with high accuracy for well-known companies.
-
-### Challenge 8: Video Preview Not Showing During Recording
-
-**Problem**: Users couldn't see themselves while recording, leading to framing and presentation issues.
-
-**Root Cause**: Video element lacked `autoPlay` and `playsInline` attributes required by modern browsers for immediate playback.
-
-**Solution**:
-```tsx
-<video
-  ref={videoRef}
-  autoPlay
-  playsInline
-  muted
-  className="w-full rounded-lg"
-  style={{ minHeight: '300px' }}
-/>
-
-// Set stream on element
-videoRef.current.srcObject = stream
-```
-
-**Outcome**: Live preview displays immediately upon camera access, improving user experience and pitch quality.
 
 ---
 
 ## Future Plans
 
-### Short-Term Enhancements (1-3 months)
-
-**Pitch Practice:**
-- **Pitch History & Analytics**: Save previous pitches and track improvement over time with score trending
-- **Side-by-Side Comparison**: Compare two pitch versions to identify specific improvements
-- **Slide Analysis**: Extract and analyze pitch deck slides using OCR and vision models
-- **Practice Mode**: Real-time feedback during pitch (audio-only analysis for speed)
-- **Custom Personas**: Allow users to create custom expert personas with specific expertise areas
-
-**Idea Analyzer:**
-- **USPTO API Integration**: Replace Google Patents scraping with official API for accurate, up-to-date data
-- **Crunchbase Integration**: Add funding history and competitive landscape from Crunchbase
-- **Google Trends Analysis**: Validate market interest using search trends and seasonal patterns
-- **PDF Report Export**: Generate professional PDF reports with charts and detailed analysis
-- **Comparison Mode**: Save and compare multiple idea variations side-by-side
-
-**Market Insights:**
-- **TAM/SAM/SOM Estimation**: Calculate Total Addressable Market, Serviceable Available Market, and Serviceable Obtainable Market
-- **Competitor Monitoring**: Track competitor changes and funding announcements
-- **Market Trend Analysis**: Identify emerging trends in target industry
-- **Customer Interview Generator**: Create targeted interview questions for persona validation
-
-### Medium-Term Goals (3-6 months)
-
-**Platform Features:**
-- **User Authentication**: Sign up, login, and personal dashboard
-- **Persistent Storage**: Save all analyses and track progress over time
-- **Team Collaboration**: Share analyses with co-founders and advisors
-- **Email Reports**: Scheduled digest of insights and recommendations
-- **API Access**: Public API for integration with other tools
-
-**Advanced Analysis:**
-- **Multi-Language Support**: Transcription and analysis in Spanish, French, German, Mandarin
-- **Financial Projections**: Revenue modeling and burn rate analysis
-- **Fundraising Readiness Score**: Evaluate preparedness for different funding stages (Seed, Series A, etc.)
-- **Regulatory Compliance Checker**: Industry-specific compliance analysis (GDPR, HIPAA, SOC2)
-
-**UI/UX Improvements:**
-- **Mobile App**: Native iOS and Android applications
-- **Voice Commands**: Navigate and trigger analysis via voice
-- **Accessibility**: WCAG 2.1 AA compliance for screen readers and keyboard navigation
-- **Localization**: Multi-language UI support
-
-### Long-Term Vision (6-12 months)
-
-**AI Advancements:**
-- **Fine-Tuned Models**: Domain-specific Claude models trained on pitch deck corpus
-- **Investor Matching**: Connect startups with investors based on analysis results
-- **Automated Deck Generation**: Generate pitch decks from idea descriptions
-- **Simulated Q&A**: Practice answering investor questions with AI-generated follow-ups
-
-**Ecosystem Integration:**
-- **CRM Integration**: Sync with HubSpot, Salesforce for lead tracking
-- **Cap Table Integration**: Connect with Carta, Pulley for equity management
-- **Slack/Teams Bots**: Get insights without leaving communication tools
-- **Zapier Connectors**: Automate workflows with 5000+ apps
-
-**Business Model:**
-- **Freemium Tier**: 3 analyses per month free
-- **Pro Tier**: Unlimited analyses, history, PDF exports ($29/month)
-- **Team Tier**: Multi-user accounts, collaboration ($99/month)
-- **Enterprise**: Custom deployments, API access, dedicated support
+- Real-time audio-based pitch feedback with instantaneous scoring.
+- Conversational multi-turn context extraction for deeper, more accurate analysis across iterative founder inputs.
+- Ensemble-model evaluation using multiple LLMs as a judge panel, combined with a supervising aggregator for consistent, high-confidence results.
+- Investment analysis including estimated seed expenditure, early revenue projections, and financial viability modeling.
+- AI-powered investor avatar simulations to mimic real Q&A pressure
 
 ---
 
 ## Team & Contributions
 
-### Project Creator
+**Hemanjali** - Worked on Pitch Practice
+**Revanth** - Worked on Market Insights
+**Sreekar** - Worked on Analyze your Idea 
 
-**Hema** - Full-Stack Developer
-- **Role**: Solo developer responsible for all aspects of SHARK BAIT
-- **Contributions**:
-  - Backend architecture and FastAPI implementation
-  - Frontend design and Next.js development
-  - Claude API integration and prompt engineering
-  - Video processing pipeline (FFmpeg, Whisper, OpenCV)
-  - Market insights analyzer with web search integration
-  - UI/UX design with Tailwind CSS and Recharts
-  - Documentation and deployment
 
 ### Technologies Used
 
